@@ -1,0 +1,7 @@
+*.suo
+*.opendb
+*.db
+x64/
+Release/
+Debug/
+*.asv
