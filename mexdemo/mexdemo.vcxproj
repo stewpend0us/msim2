@@ -127,6 +127,11 @@
   <ItemGroup>
     <None Include="Makefile" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\csim2\csim2\csim2.vcxproj">
+      <Project>{1e802af7-e608-42ed-a2d0-bb119f40e884}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

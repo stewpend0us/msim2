@@ -1,11 +1,12 @@
 #include <string.h>
 #include <errno.h>
-#include "../csim2/constructors.h"
-#include "../csim2/integrator.h"
-#include "../csim2/firstOrderLag.h"
-#include "../csim2/secondOrderSystem.h"
-#include "../csim2/blockSystem.h"
-#include "../csim2/dllInterface.h"
+#include "../csim2/csim2/constructors.h"
+#include "../csim2/csim2/constructors.h"
+#include "../csim2/csim2/integrator.h"
+#include "../csim2/csim2/firstOrderLag.h"
+#include "../csim2/csim2/secondOrderSystem.h"
+#include "../csim2/csim2/blockSystem.h"
+#include "../dllInterface.h"
 
 // DEMO 1 =================================================================================
 
