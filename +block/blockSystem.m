@@ -1,76 +1,46 @@
-function b = blockSystem(...
-    numSystemInputs,...
-    numSystemOutputs,...
-    blocks,...
-    calcBlockInputs,... [blockInputs, systemStorage] = @( numBlocks, blocks, time, blockOutputs, numSystemInputs, systemInputs, systemStorage )
-    calcSystemOutput,... [systemOutputs, systemStorage] = @( numSystemOutputs, time, blockOutputs, systemStorage )
-    systemStorage...
-    )
+function this = blockSystem(blocks, numInputs, numOutputs, calcBlockInputs, calcSystemOutput)
 storage.numBlocks = numel(blocks);
 storage.blocks = blocks;
-storage.blockInputs = arrayfun(@(x) zeros(x.numInputs,1), blocks, 'uniformoutput', false);
-storage.blockOutputs = arrayfun(@(x) zeros(x.numOutputs,1), blocks, 'uniformoutput', false);
+storage.blockInputs = {};
+storage.blockOutputs = {};
 storage.calcBlockInputs = calcBlockInputs;
 storage.calcSystemOutput = calcSystemOutput;
 storage.systemStorage = systemStorage;
 
-totalBlockStates = sum([blocks.numStates]);
-b = struct;
-b.numStates = totalBlockStates;
-b.numInputs = numSystemInputs;
-b.numOutputs = numSystemOutputs;
-b.f = @physics;
-b.h = @output;
-b.storage = storage;
+numStates = sum([blocks.numStates]);
+this = strictlyProperBlock(numInputs, numOutputs, numStates, storage, @output, @physics, @util);
 end
 
 % BlockSystem
-function [dState, storage] = physics(...
-    numStates,...
-    numInputs,...
-    time,...
-    state,...
-    input,...
-    storage...
-    )
-blocks = storage.blocks;
+function [dState, this] = physics(this, time, state, input)
 % update all of the block outputs based on the latest state
 xi = 0;
-for i = 1:storage.numBlocks
-    statei = xi + (1:blocks(i).numStates);
-    [storage.blockOutputs{i}, blocks(i).storage] = blocks(i).h(blocks(i).numStates, blocks(i).numOutputs, time, state(statei), blocks(i).storage);
-    xi = xi + blocks(i).numStates;
+for i = 1:this.storage.numBlocks
+    statei = xi + (1:this.blocks(i).numStates);
+    [this.storage.blockOutputs{i}, this.blocks(i)] = this.storage.blocks(i).h(this.storage.blocks(i), time, state(statei));
+    xi = xi + this.blocks(i).numStates;
 end
 % calculate the block inputs from the updated block outputs
-[storage.blockInputs, storage.systemStorage] = storage.calcBlockInputs( storage.numBlocks, storage.blocks, time, storage.blockOutputs, numInputs, input, storage.systemStorage );
+[this.storage.blockInputs, this.storage] = storage.calcBlockInputs( this.storage.numBlocks, this.storage.blocks, time, this.storage.blockOutputs, numInputs, input, this.storage.systemStorage );
 % finally calculate the block dstate from the updated block inputs
 xi = 0;
 dState = zeros(1,numStates);
-for i = 1:storage.numBlocks
-    statei = xi + (1:blocks(i).numStates);
-    [dState(statei), blocks(i).storage] = blocks(i).f(blocks(i).numStates, blocks(i).numInputs, time, state(statei), storage.blockInputs{i}, blocks(i).storage);
-    xi = xi + blocks(i).numStates;
+for i = 1:this.storage.numBlocks
+    statei = xi + (1:this.blocks(i).numStates);
+    [dState(statei), this.blocks(i).storage] = this.storage.blocks(i).f(this.storage.blocks(i), time, state(statei), this.storage.blockInputs{i});
+    xi = xi + this.blocks(i).numStates;
 end
-storage.blocks = blocks;
 end
 
-function [output, storage] = output(...
-    numStates,...
-    numOutputs,...
-    time,...
-    state,...
-    storage...
-    )
-blocks = storage.blocks;
+function [output, this] = output(this, time, state)
 xi = 0;
-for i = 1:storage.numBlocks
-    statei = xi + (1:blocks(i).numStates);
-    [storage.blockOutputs{i}, blocks(i).storage] = blocks(i).h(blocks(i).numStates, blocks(i).numOutputs, time, state(statei), blocks(i).storage);
-    xi = xi + blocks(i).numStates;
+for i = 1:this.storage.numBlocks
+    statei = xi + (1:this.blocks(i).numStates);
+    [this.storage.blockOutputs{i}, this.storage.blocks(i)] = this.storage.blocks(i).h(this.storage.blocks(i), time, state(statei));
+    xi = xi + this.storage.blocks(i).numStates;
 end
 
-[output, storage.systemStorage] = storage.calcSystemOutput( numOutputs, time, storage.blockOutputs, storage.systemStorage );
-storage.blocks = blocks;
+[output, this.storage] = storage.calcSystemOutput( this.storage.numOutputs, time, this.storage.blockOutputs, this.storage.systemStorage);
 end
 
 
